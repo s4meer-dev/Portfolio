@@ -5,8 +5,8 @@ import { useEffect, useRef } from "react";
 export default function Background() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
-  const mouseRef = useRef({ x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5 });
-  const scrollRef = useRef(0);
+  const mouseRef = useRef({ x: -1000, y: -1000, targetX: -1000, targetY: -1000 });
+  const glowRef = useRef({ x: -1000, y: -1000 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -16,61 +16,66 @@ export default function Background() {
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
 
-    // Particles
-    interface BgParticle {
-      x: number;
-      y: number;
-      baseX: number;
-      baseY: number;
-      vx: number;
-      vy: number;
-      size: number;
-      alpha: number;
-      speed: number;
-      drift: number;
+    // Config
+    const dotSpacing = 17; // 16-18
+    const dotRadiusBase = 1.3; // 1.2-1.4
+    const waveAmplitude = 0.8; // 0.5-1 (very gentle)
+    const cursorRadius = 350; // 300-400
+    const cursorForce = 0.1; // 0.08-0.12
+    const bulgeStrength = cursorRadius * cursorForce; // ~35
+    const sparkle = false;
+
+    interface Dot {
+      bx: number; // base x
+      by: number; // base y
+      offset: number; // for wave phase
+      speedOffset: number; // for slight parallax feel
     }
 
-    const particles: BgParticle[] = [];
-    const PARTICLE_COUNT = 80;
+    let dots: Dot[] = [];
 
-    const initParticles = () => {
-      particles.length = 0;
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const x = Math.random() * w;
-        const y = Math.random() * h;
-        particles.push({
-          x,
-          y,
-          baseX: x,
-          baseY: y,
-          vx: (Math.random() - 0.5) * 0.15,
-          vy: (Math.random() - 0.5) * 0.1 - 0.05,
-          size: 0.5 + Math.random() * 1.5,
-          alpha: 0.05 + Math.random() * 0.2,
-          speed: 0.3 + Math.random() * 0.5,
-          drift: Math.random() * Math.PI * 2,
-        });
+    const initDots = () => {
+      dots = [];
+      const cols = Math.ceil(w / dotSpacing) + 2;
+      const rows = Math.ceil(h / dotSpacing) + 2;
+      
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          dots.push({
+            bx: i * dotSpacing - dotSpacing,
+            by: j * dotSpacing - dotSpacing,
+            offset: Math.random() * Math.PI * 2,
+            speedOffset: 0.8 + Math.random() * 0.4, // slight parallax variation
+          });
+        }
       }
     };
-    initParticles();
+    initDots();
 
     const handleResize = () => {
       w = canvas.width = window.innerWidth;
       h = canvas.height = window.innerHeight;
-      initParticles();
+      initDots();
     };
     window.addEventListener("resize", handleResize);
 
     const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current.targetX = e.clientX / w;
-      mouseRef.current.targetY = e.clientY / h;
+      mouseRef.current.targetX = e.clientX;
+      mouseRef.current.targetY = e.clientY;
+      if (glowRef.current.x === -1000) {
+        glowRef.current.x = e.clientX;
+        glowRef.current.y = e.clientY;
+      }
     };
     window.addEventListener("mousemove", handleMouseMove);
 
-    const handleScroll = () => {
-      scrollRef.current = window.scrollY;
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Initial mouse position centered if not moved
+    mouseRef.current.targetX = w / 2;
+    mouseRef.current.targetY = h / 2;
+    mouseRef.current.x = w / 2;
+    mouseRef.current.y = h / 2;
+    glowRef.current.x = w / 2;
+    glowRef.current.y = h / 2;
 
     let tick = 0;
 
@@ -78,62 +83,89 @@ export default function Background() {
       tick++;
       ctx.clearRect(0, 0, w, h);
 
-      // Lerp mouse
+      // Deep black base
+      ctx.fillStyle = "#050508";
+      ctx.fillRect(0, 0, w, h);
+
+      // Lerp mouse (ultra smooth)
       const m = mouseRef.current;
-      m.x += (m.targetX - m.x) * 0.02;
-      m.y += (m.targetY - m.y) * 0.02;
+      m.x += (m.targetX - m.x) * 0.04; // Increased smoothing (was 0.08)
+      m.y += (m.targetY - m.y) * 0.04;
 
-      // ---- LAYER 1: Animated gradient ----
-      const scrollPct = Math.min(scrollRef.current / (document.body.scrollHeight - h), 1);
-      const gradPhase = tick * 0.001 + scrollPct * 2;
+      // Lerp glow (delayed for premium trailing feel)
+      const g = glowRef.current;
+      g.x += (m.targetX - g.x) * 0.015; 
+      g.y += (m.targetY - g.y) * 0.015;
 
-      // Subtle shift with mouse
-      const gradX = w * (0.3 + m.x * 0.4);
-      const gradY = h * (0.2 + m.y * 0.3 + Math.sin(gradPhase) * 0.1);
-
-      const grad = ctx.createRadialGradient(gradX, gradY, 0, gradX, gradY, Math.max(w, h) * 0.8);
-      grad.addColorStop(0, "rgba(25, 15, 45, 0.5)");
-      grad.addColorStop(0.35, "rgba(12, 8, 24, 0.3)");
-      grad.addColorStop(0.7, "rgba(5, 5, 8, 0.1)");
-      grad.addColorStop(1, "rgba(5, 5, 8, 0)");
+      // Draw Localized Glow (Soft purple, strictly around cursor)
+      const glowRadius = 200; // 160-220
+      const grad = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, glowRadius);
+      grad.addColorStop(0, "rgba(123, 44, 255, 0.15)"); // soft purple tone
+      grad.addColorStop(0.4, "rgba(123, 44, 255, 0.06)");
+      grad.addColorStop(1, "rgba(10, 10, 10, 0)"); // seamless fade
+      
+      ctx.globalCompositeOperation = "screen"; // beautiful soft blend
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over"; // reset
 
-      // Secondary soft glow that follows mouse
-      const glow2 = ctx.createRadialGradient(
-        w * m.x, h * m.y, 0,
-        w * m.x, h * m.y, 300
-      );
-      glow2.addColorStop(0, "rgba(160, 140, 255, 0.03)");
-      glow2.addColorStop(1, "rgba(160, 140, 255, 0)");
-      ctx.fillStyle = glow2;
+      // Draw Dots
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      
+      for (let i = 0; i < dots.length; i++) {
+        const d = dots[i];
+        
+        let x = d.bx;
+        let y = d.by;
+
+        // Wave motion (slowed down, gentle)
+        const timeOffset = tick * 0.005 * d.speedOffset;
+        x += Math.sin(timeOffset + d.offset) * waveAmplitude;
+        y += Math.cos(timeOffset + d.offset) * waveAmplitude;
+
+        // Cursor bulge (smooth displacement)
+        const dx = x - m.x;
+        const dy = y - m.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < cursorRadius) {
+          const force = Math.pow(1 - dist / cursorRadius, 3); // Cubic ease out for extreme smoothness
+          x += (dx / dist) * force * bulgeStrength;
+          y += (dy / dist) * force * bulgeStrength;
+        }
+
+        // Clean static alpha and size
+        let alpha = 0.25; 
+        let radius = dotRadiusBase;
+        
+        // Boost alpha and size softly near cursor glow
+        if (dist < glowRadius) {
+            const influence = 1 - dist / glowRadius;
+            alpha += 0.3 * influence; // soft fade in
+            radius += 0.5 * influence; // minimal size increase
+        }
+
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Vignette (Darker edges)
+      const vignette = ctx.createRadialGradient(w/2, h/2, w*0.3, w/2, h/2, w*0.8);
+      vignette.addColorStop(0, "rgba(5, 5, 8, 0)");
+      vignette.addColorStop(1, "rgba(0, 0, 0, 0.8)");
+      ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, w, h);
 
-      // ---- LAYER 2: Particles ----
-      const scrollOffset = scrollRef.current * 0.05;
-      particles.forEach((p) => {
-        p.drift += 0.003;
-        p.x += p.vx + Math.sin(p.drift) * 0.1;
-        p.y += p.vy - scrollOffset * 0.001;
-
-        // Mouse influence (very subtle)
-        const mdx = (m.x - 0.5) * 15;
-        const mdy = (m.y - 0.5) * 15;
-        p.x += mdx * 0.002;
-        p.y += mdy * 0.002;
-
-        // Wrap around
-        if (p.x < -10) p.x = w + 10;
-        if (p.x > w + 10) p.x = -10;
-        if (p.y < -10) p.y = h + 10;
-        if (p.y > h + 10) p.y = -10;
-
-        const twinkle = 0.6 + 0.4 * Math.sin(tick * 0.02 + p.drift * 5);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(200, 190, 255, ${p.alpha * twinkle})`;
-        ctx.fill();
-      });
+      // Very subtle noise/grain
+      ctx.fillStyle = "rgba(255, 255, 255, 0.015)";
+      for(let i=0; i < (w * h) / 4000; i++) {
+        const nx = Math.random() * w;
+        const ny = Math.random() * h;
+        ctx.fillRect(nx, ny, 1, 1);
+      }
 
       frameRef.current = requestAnimationFrame(render);
     };
@@ -144,18 +176,15 @@ export default function Background() {
       cancelAnimationFrame(frameRef.current);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#050508", pointerEvents: "none" }}>
       <canvas
         ref={canvasRef}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        style={{ display: "block", width: "100%", height: "100%" }}
       />
-      {/* Layer 3: Noise overlay */}
-      <div className="noise" />
     </div>
   );
 }

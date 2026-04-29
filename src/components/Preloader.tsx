@@ -69,7 +69,7 @@ export default function Preloader() {
     };
     window.addEventListener("resize", handleResize);
 
-    particlesRef.current = createParticles(cx, cy, 250);
+    particlesRef.current = createParticles(cx, cy, 200); // reduced slightly for performance with shadowBlur
 
     const state = {
       galaxyExpand: 0,
@@ -168,24 +168,24 @@ export default function Preloader() {
     tl.to(nameChars, {
       opacity: 0,
       filter: "blur(6px)",
-      scale: 1.05,
+      scale: 1.1,
       duration: 1.0,
       ease: "power4.out"
     }, 5.2);
 
     // 3. Background zoom and fade transition (last)
     tl.to(state, {
-      cameraZoom: 1.5,
-      rotation: Math.PI / 16,
-      duration: 1.3,
-      ease: "expo.out" // smooth, non-harsh zoom
+      cameraZoom: 3, // cinematic expansion
+      rotation: Math.PI / 8,
+      duration: 1.5,
+      ease: "expo.inOut" // smooth, non-harsh zoom
     }, 5.4);
 
     tl.to(container, {
       opacity: 0,
-      duration: 1.1,
-      ease: "power2.inOut"
-    }, 5.5);
+      duration: 1.5,
+      ease: "expo.inOut"
+    }, 5.4);
 
     // CANVAS RENDER LOOP
     const render = () => {
@@ -218,7 +218,10 @@ export default function Preloader() {
         ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = "source-over"; 
 
-        // Particles
+        // Particles with canvas shadow blur for soft glow
+        ctx.shadowBlur = 12 * state.glowIntensity * state.cameraZoom;
+        ctx.shadowColor = "rgba(180, 200, 255, 0.8)";
+
         particlesRef.current.forEach((p) => {
           p.angle += p.speed;
 
@@ -231,7 +234,7 @@ export default function Preloader() {
             p.alpha = Math.min(p.alpha + 0.008, p.targetAlpha * state.glowIntensity);
           }
           
-          const finalAlpha = p.alpha * (1 - (state.cameraZoom - 1) * 1.5); 
+          const finalAlpha = p.alpha * (1 - (state.cameraZoom - 1) * 0.8); // fade out slower on zoom
           const finalSize = p.size * state.cameraZoom;
 
           if (finalAlpha > 0.01 && finalSize > 0.1 && p.x > -50 && p.x < w + 50 && p.y > -50 && p.y < h + 50) {
@@ -241,6 +244,8 @@ export default function Preloader() {
             ctx.fill();
           }
         });
+
+        ctx.shadowBlur = 0; // reset shadow for other renders
         
         ctx.restore();
       }
@@ -344,8 +349,8 @@ export default function Preloader() {
                 fontFamily: "var(--font-space)",
                 lineHeight: 1.2,
                 display: "inline-block",
-                margin: "0 0.08em",
-                textShadow: "0px 0px 30px rgba(255, 255, 255, 0.2)", // Soft glow behind strong white text
+                margin: "0 0.04em",
+                textShadow: "0px 0px 30px rgba(255, 255, 255, 0.4)", // Soft glow behind strong white text
                 willChange: "transform, opacity, filter"
               }}
             >
@@ -368,7 +373,7 @@ export default function Preloader() {
             willChange: "transform, opacity, filter"
           }}
         >
-          Initializing World
+          Initializing Experience
         </div>
       </div>
     </div>
