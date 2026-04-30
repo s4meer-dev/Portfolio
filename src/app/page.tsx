@@ -9,13 +9,15 @@ import Contact from "@/sections/Contact";
 
 export default function Home() {
   return (
-    <main style={{ position: 'relative', width: '100%', minHeight: '100vh', background: '#050508' }}>
+    <main className="main-experience">
       <Background />
-      <Hero />
-      <About />
-      <Skills />
-      <Projects />
-      <Contact />
+      <div className="experience-layers">
+        <Hero />
+        <About />
+        <Skills />
+        <Projects />
+        <Contact />
+      </div>
     </main>
   );
 }
