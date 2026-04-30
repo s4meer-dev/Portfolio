@@ -20,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${inter.variable}`}>
+        <div className="noise" />
         <Providers>
           <Navbar />
           {children}
