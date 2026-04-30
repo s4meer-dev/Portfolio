@@ -8,8 +8,9 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "SAMEER — Creative Developer & Digital Architect",
-  description: "Portfolio of Sameer, full-stack developer and creative technologist crafting immersive digital experiences.",
+  title: "SAMEER | Creative Developer — Immersive Digital Architect",
+  description: "Explore the cinematic portfolio of Sameer, a creative developer specializing in high-performance WebGL, GSAP animations, and immersive user experiences.",
+  keywords: ["Creative Developer", "Frontend Engineer", "WebGL", "Three.js", "GSAP", "React", "Next.js", "Portfolio"],
 };
 
 export default function RootLayout({
