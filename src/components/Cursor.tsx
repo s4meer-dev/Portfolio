@@ -25,8 +25,20 @@ export default function Cursor() {
     };
     window.addEventListener("mousemove", onMouseMove);
 
+    let lastMouse = { x: mouse.x, y: mouse.y };
+    let velocity = 0;
+
     // Smooth follow loop
     const render = () => {
+      // Calculate velocity
+      const dx = mouse.x - lastMouse.x;
+      const dy = mouse.y - lastMouse.y;
+      const targetVelocity = Math.min(Math.sqrt(dx * dx + dy * dy) / 10, 1.5);
+      velocity += (targetVelocity - velocity) * 0.1;
+      
+      lastMouse.x = mouse.x;
+      lastMouse.y = mouse.y;
+
       // Dot follows instantly
       gsap.set(dot, {
         x: mouse.x,
@@ -41,6 +53,8 @@ export default function Cursor() {
       gsap.set(ring, {
         x: ringPos.x,
         y: ringPos.y,
+        scale: 1 + velocity * 0.5,
+        rotation: velocity * 20,
       });
 
       // Glow follows with even more delay
@@ -50,6 +64,7 @@ export default function Cursor() {
       gsap.set(glow, {
         x: glowPos.x,
         y: glowPos.y,
+        scale: 1 + velocity * 0.3,
       });
 
       requestAnimationFrame(render);
