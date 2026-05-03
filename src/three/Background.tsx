@@ -30,6 +30,7 @@ export default function Background() {
       by: number; // base y
       offset: number; // for wave phase
       speedOffset: number; // for slight parallax feel
+      depth: number; // 0 for foreground, 1 for background
     }
 
     let dots: Dot[] = [];
@@ -41,11 +42,13 @@ export default function Background() {
       
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
+          const depth = Math.random() > 0.85 ? 0 : 1; // 15% are foreground dots
           dots.push({
             bx: i * dotSpacing - dotSpacing,
             by: j * dotSpacing - dotSpacing,
             offset: Math.random() * Math.PI * 2,
-            speedOffset: 0.8 + Math.random() * 0.4, // slight parallax variation
+            speedOffset: 0.8 + Math.random() * 0.4,
+            depth: depth
           });
         }
       }
@@ -118,10 +121,14 @@ export default function Background() {
         let x = d.bx;
         let y = d.by;
 
+        // Depth-based variations
+        const isForeground = d.depth === 0;
+        const speedMult = isForeground ? 1.5 : 0.6;
+        
         // Wave motion (slowed down, gentle)
         const timeOffset = tick * 0.005 * d.speedOffset;
-        x += Math.sin(timeOffset + d.offset) * waveAmplitude;
-        y += Math.cos(timeOffset + d.offset) * waveAmplitude;
+        x += Math.sin(timeOffset + d.offset) * waveAmplitude * speedMult;
+        y += Math.cos(timeOffset + d.offset) * waveAmplitude * speedMult;
 
         // Cursor bulge (smooth displacement)
         const dx = x - m.x;
@@ -130,19 +137,20 @@ export default function Background() {
 
         if (dist < cursorRadius) {
           const force = Math.pow(1 - dist / cursorRadius, 3); // Cubic ease out for extreme smoothness
-          x += (dx / dist) * force * bulgeStrength;
-          y += (dy / dist) * force * bulgeStrength;
+          const displacement = isForeground ? 1.2 : 0.8;
+          x += (dx / dist) * force * bulgeStrength * displacement;
+          y += (dy / dist) * force * bulgeStrength * displacement;
         }
 
         // Clean static alpha and size
-        let alpha = 0.25; 
-        let radius = dotRadiusBase;
+        let alpha = isForeground ? 0.35 : 0.15; 
+        let radius = isForeground ? dotRadiusBase * 1.2 : dotRadiusBase * 0.8;
         
         // Boost alpha and size softly near cursor glow
         if (dist < glowRadius) {
             const influence = 1 - dist / glowRadius;
-            alpha += 0.3 * influence; // soft fade in
-            radius += 0.5 * influence; // minimal size increase
+            alpha += (isForeground ? 0.4 : 0.2) * influence; // soft fade in
+            radius += 0.4 * influence; // minimal size increase
         }
 
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
