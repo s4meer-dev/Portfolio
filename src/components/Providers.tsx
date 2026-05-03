@@ -14,9 +14,11 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const l = new Lenis({
-      duration: 1.4,
+      duration: 1.6,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
+      wheelMultiplier: 1.1,
+      touchMultiplier: 2,
+      infinite: false,
     });
 
     l.on("scroll", ScrollTrigger.update);
