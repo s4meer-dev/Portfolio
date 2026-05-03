@@ -216,8 +216,18 @@ export default function Preloader() {
         
         ctx.fillStyle = outerGrad;
         ctx.fillRect(0, 0, w, h);
-        ctx.globalCompositeOperation = "source-over"; 
 
+        // Nebula Clouds (Dynamic Layer)
+        const time = Date.now() * 0.0005;
+        const cloudX = cx + Math.sin(time) * 100;
+        const cloudY = cy + Math.cos(time * 0.7) * 50;
+        const nebulaGrad = ctx.createRadialGradient(cloudX, cloudY, 0, cloudX, cloudY, 600 * state.galaxyExpand);
+        nebulaGrad.addColorStop(0, `rgba(123, 44, 255, ${0.03 * state.glowIntensity})`);
+        nebulaGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = nebulaGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.globalCompositeOperation = "source-over"; 
         // Particles with canvas shadow blur for soft glow
         ctx.shadowBlur = 12 * state.glowIntensity * state.cameraZoom;
         ctx.shadowColor = "rgba(180, 200, 255, 0.8)";
