@@ -256,6 +256,16 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 100;
   padding: 24px 0;
   mix-blend-mode: difference;
+  transition: all 0.4s var(--ease-out);
+}
+
+.nav-scrolled {
+  background: rgba(3, 3, 5, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 16px 0;
+  mix-blend-mode: normal;
+  border-bottom: 1px solid rgba(155, 135, 255, 0.05);
 }
 
 .nav-links a {
