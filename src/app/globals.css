@@ -4,21 +4,21 @@
    ============================================ */
 
 :root {
-  --bk: #050508;
-  --dk: #0a0a12;
-  --card: rgba(12, 10, 20, 0.5);
-  --bdr: rgba(160, 140, 255, 0.1);
-  --accent: rgba(160, 140, 255, 0.8);
-  --accent-dim: rgba(160, 140, 255, 0.4);
-  --glow: rgba(160, 140, 255, 0.15);
-  --text: #e8e6f0;
-  --text-dim: #8a8a9a;
+  --bk: #030305;
+  --dk: #08080f;
+  --card: rgba(10, 10, 18, 0.4);
+  --bdr: rgba(150, 130, 255, 0.08);
+  --accent: rgba(155, 135, 255, 0.85);
+  --accent-dim: rgba(155, 135, 255, 0.45);
+  --glow: rgba(155, 135, 255, 0.12);
+  --text: #ece9f5;
+  --text-dim: #7d7d8c;
 
   --font-space: 'Space Grotesk', sans-serif;
   --font-inter: 'Inter', sans-serif;
 
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
 *, *::before, *::after {
