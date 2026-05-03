@@ -87,6 +87,21 @@ export default function Hero() {
           repeat: -1,
         });
 
+        // Mouse parallax on headline
+        const onMouseMove = (e: MouseEvent) => {
+          const { clientX, clientY } = e;
+          const xPos = (clientX / window.innerWidth - 0.5) * 30;
+          const yPos = (clientY / window.innerHeight - 0.5) * 30;
+
+          gsap.to(".hero-content", {
+            x: xPos,
+            y: yPos - (window.scrollY * 0.2), // combine with scroll
+            duration: 1.2,
+            ease: "power2.out",
+          });
+        };
+        window.addEventListener("mousemove", onMouseMove);
+
         // Parallax on scroll
         gsap.to(".hero-content", {
           scrollTrigger: {
@@ -95,7 +110,6 @@ export default function Hero() {
             end: "bottom top",
             scrub: 1,
           },
-          y: -80,
           opacity: 0.3,
           filter: "blur(4px)",
           ease: "none",
